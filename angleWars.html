@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Bootstrap Example</title>
+  <meta charset="utf-8">
+  i<meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+    <style>
+body {
+    background-color: black;
+}
+</style>
+</head>
+<body>
+  <div align="center">
+  <div class="row">
+    <div class="col-sm-12">
+    <svg width=600 height=600>
+      <circle id="blue" cx=100 cy=100 r=30 stroke="white" stroke-width=4 fill="blue"></circle>
+      <circle id="red" cx=500 cy=500 r=30 stroke="white" stroke-width=4 fill="red"></circle>
+      <circle id="green" cx=500 cy=100 r=30 stroke="white" stroke-width=4 fill="yellow"></circle>
+    </svg></div><br></div>
+  <font size=5 color="white" style="Courier New">
+  <div class="row">
+    <div class="col-sm-4">
+      Command<br>
+      <font color="black">
+    <input type="text" id="textInput"/><br>
+      </font>
+    </div>
+    <div class="col-sm-4">
+      Values<br>
+      <font color="black">
+    <input type="number" id="numInput"/><br>
+    <input type="number" id="numInput"/><br>
+      </font>
+    </div>
+    <div class="col-sm-4">
+    <br>
+    <button type="button" id="submit" onclick="action()" class="btn btn-danger btn-lg">SUBMIT</button><br>
+  </div>
+
+
+</div>
+</font>
+</div>
+
+
+<script>
+
+
+
+var turn = 0;
+var fixDst = 200;
+
+function setNewBall(id) {
+
+  this.id = document.getElementById(id);
+  var me = this.id;
+  this.move = function(angle) {
+    var radAngle = angle*Math.PI/180;
+    var xDiff = fixDst*Math.sin(radAngle);
+    var yDiff = -fixDst*Math.cos(radAngle);
+
+
+    me.setAttribute("cx",Number(me.getAttribute("cx"))+Math.round(xDiff));
+    me.setAttribute("cy",Number(me.getAttribute("cy"))+Math.round(yDiff));
+
+  };
+  this.checkCollision = function() {
+    for (var i = 0; i < players.length; i++) {
+
+      var otherBall = players[i].id;
+      if(me !== otherBall){
+        var myX = Number(me.getAttribute("cx"));
+        var myY = Number(me.getAttribute("cy"));
+        var theirX = Number(otherBall.getAttribute("cx"));
+        var theirY = Number(otherBall.getAttribute("cy"));
+        var radius = Number(me.getAttribute("r"));
+        if (myX <= theirX+2*radius && myX >= theirX-2*radius && myY <= theirY+2*radius && myY >= theirY-2*radius){
+          alert("COLLISION");
+        } else {
+          alert("NO COLL"+" "+myX+" "+myY+" "+theirX+" "+theirY+" "+radius+" "+turn);
+        }
+      }
+    }
+  }
+}
+
+var blue = new setNewBall("blue");
+var red = new setNewBall("red");
+var green = new setNewBall("green");
+
+var players = [blue,red,green];
+
+
+
+
+
+
+function action(){
+  var x = document.getElementById("textInput").value;
+  var input = Number(document.getElementById("numInput").value);
+
+  if (x=="move"){
+    var me = players[turn];
+    me.move(input);
+    turn++;
+    if(turn==players.length){
+      turn = 0;
+    }
+
+
+
+  } else if (x=="alert") {
+    alert(input+" "+x+" "+me+" "+turn);
+  } else if (x=="coll") {
+    var me = players[turn];
+    me.checkCollision();
+  }
+
+}
+
+
+
+
+
+</script>
+</body>
+</html>
