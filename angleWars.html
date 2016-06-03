@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Bootstrap Example</title>
+  <title>AngleWars 1.3</title>
   <meta charset="utf-8">
   i<meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
@@ -17,10 +17,17 @@ body {
   <div align="center">
   <div class="row">
     <div class="col-sm-12">
-    <svg width=600 height=600>
+
+    <svg width=606 height=606 id="board">
+
+      <rect x=0 y=0 width=606 height=3 fill="white" />
+      <rect x=0 y=603 width=606 height=3 fill="white" />
+      <rect x=0 y=3 width=3 height=600 fill="white" />
+      <rect x=603 y=3 width=3 height=600 fill="white" />
+
       <circle id="blue" cx=100 cy=100 r=30 stroke="white" stroke-width=4 fill="blue"></circle>
       <circle id="red" cx=500 cy=500 r=30 stroke="white" stroke-width=4 fill="red"></circle>
-      <circle id="green" cx=500 cy=100 r=30 stroke="white" stroke-width=4 fill="violet"></circle>
+      <circle id="green" cx=500 cy=100 r=30 stroke="white" stroke-width=4 fill="green"></circle>
     </svg></div><br></div>
   <font size=5 color="white" style="Courier New">
   <div class="row">
@@ -34,7 +41,7 @@ body {
       Values<br>
       <font color="black">
     <input type="number" id="numInput"/><br>
-    <input type="number" id="numInput"/><br>
+    <input type="number" id="numInput2"/><br>
       </font>
     </div>
     <div class="col-sm-4">
@@ -53,22 +60,79 @@ body {
 
 
 var turn = 0;
-var fixDst = 200;
+var fixDst = 120;
+var glideDivInt = 10;
+
+
+var board = document.getElementById("board");
 
 function setNewBall(id) {
 
   this.id = document.getElementById(id);
   var me = this.id;
-  this.move = function(angle) {
-    var radAngle = angle*Math.PI/180;
-    var xDiff = fixDst*Math.sin(radAngle);
-    var yDiff = -fixDst*Math.cos(radAngle);
+  var soul = this;
 
+  var timer;
+  var animCounter = 0;
 
-    me.setAttribute("cx",Number(me.getAttribute("cx"))+Math.round(xDiff));
-    me.setAttribute("cy",Number(me.getAttribute("cy"))+Math.round(yDiff));
+  this.move = function(angle1,angle2) {
+
+    timer = setInterval(soul.animate, 30, angle1, angle2);
 
   };
+
+  this.animate = function(angle1,angle2) {
+
+    animCounter++;
+      if (animCounter<51){
+        angle = angle1;
+      } else if (animCounter<101){
+        angle = angle2;
+      }
+
+
+      var radAngle = angle*Math.PI/180;
+      var xDiff = fixDst*Math.sin(radAngle);
+      var yDiff = -fixDst*Math.cos(radAngle);
+
+      var destX = Number(me.getAttribute("cx"))+Math.round(xDiff);
+      var destY = Number(me.getAttribute("cy"))+Math.round(yDiff);
+
+      var oldX = Number(me.getAttribute("cx"));
+      var oldY = Number(me.getAttribute("cy"));
+
+
+      var nextX = oldX+xDiff/50;
+      var nextY = oldY+yDiff/50;
+
+      var r = Number(me.getAttribute("r"));
+      var boardX = Number(board.getAttribute("width"))-6;
+      var boardY = Number(board.getAttribute("height"))-6;
+
+      if (nextX<r) {
+        nextX+=boardX-2*r;
+      }
+      if (nextX>boardX-r) {
+        nextX-=boardX-2*r;
+      }
+      if (nextY<r) {
+        nextY+=boardY-2*r;
+      }
+      if (nextY>boardY-r) {
+        nextY-=boardY-2*r;
+      }
+      me.setAttribute("cx",nextX);
+      me.setAttribute("cy",nextY);
+
+
+      if(animCounter > 100){
+        clearInterval(timer);
+        timer = null;
+        animCounter = 0;
+      }
+
+  };
+
   this.checkCollision = function() {
     for (var i = 0; i < players.length; i++) {
 
@@ -86,8 +150,46 @@ function setNewBall(id) {
         }
       }
     }
+  };
+  this.botMove = function() {
+    var hunted = [];
+    var huntedCount = 0;
+
+      for (var i = 0; i < players.length; i++){
+        var target = players[i].id;
+        if(me !== target){
+          var myX = Number(me.getAttribute("cx"));
+          var myY = Number(me.getAttribute("cy"));
+          var thX = Number(target.getAttribute("cx"));
+          var thY = Number(target.getAttribute("cy"));
+
+          var xDiff = Math.pow(Math.abs(myX-thX),2);
+          var yDiff = Math.pow(Math.abs(myY-thY),2);
+
+          var zwischenDst = Math.sqrt(xDiff+yDiff);
+
+          if (zwischenDst < 2*fixDst) {
+            huntedCount++;
+            hunted.push(i);
+
+          }
+        }
+      }
+     if(huntedCount > 0){
+       var randomPreyInt = Math.floor(Math.random()*huntedCount);
+       var target = players[hunted[randomPreyInt]].id;
+       alert(target.getAttribute("fill"));
+     }
+
+
+     var destX = Number(target.getAttribute("cx"));
+     var destY = Number(target.getAttribute("cy"));
+     var myX = Number(me.getAttribute("cx"));
+     var myY = Number(me.getAttribute("cy"));
+
   }
 }
+// BALL DEFINITION
 
 var blue = new setNewBall("blue");
 var red = new setNewBall("red");
@@ -95,35 +197,36 @@ var green = new setNewBall("green");
 
 var players = [blue,red,green];
 
-
-
-
-
+// ACTION FNC
 
 function action(){
   var x = document.getElementById("textInput").value;
   var input = Number(document.getElementById("numInput").value);
+  var input2 = Number(document.getElementById("numInput2").value);
 
   if (x=="move"){
     var me = players[turn];
-    me.move(input);
-    turn++;
-    if(turn==players.length){
-      turn = 0;
-    }
-
-
+    me.move(input,input2);
+    //me.move(input2);
+    nextTurn();
 
   } else if (x=="alert") {
     alert(input+" "+x+" "+me+" "+turn);
   } else if (x=="coll") {
     var me = players[turn];
     me.checkCollision();
+  } else if (x=="bot") {
+    var me = players[turn];
+    me.botMove()
   }
-
 }
 
-
+function nextTurn() {
+  turn++;
+  if(turn==players.length){
+    turn = 0;
+  }
+}
 
 
 
