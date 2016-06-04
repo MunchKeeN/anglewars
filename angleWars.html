@@ -31,6 +31,10 @@ body {
     </svg></div><br></div>
   <font size=5 color="white" style="Courier New">
   <div class="row">
+    <p id="status1"></p>
+    <p id="status2"></p>
+  </div>
+  <div class="row">
     <div class="col-sm-4">
       Command<br>
       <font color="black">
@@ -48,9 +52,9 @@ body {
     <br>
     <button type="button" id="submit" onclick="action()" class="btn btn-danger btn-lg">SUBMIT</button><br>
   </div>
-
-
 </div>
+
+
 </font>
 </div>
 
@@ -61,32 +65,33 @@ body {
 
 var turn = 0;
 var fixDst = 120;
-var glideDivInt = 10;
-
+var resp = null;
 
 var board = document.getElementById("board");
+var status1 = document.getElementById("status1");
+var status2 = document.getElementById("status2");
 
-function setNewBall(id) {
+
+
+function setNewBall(id,index) {
 
   this.id = document.getElementById(id);
   var me = this.id;
   var soul = this;
 
   var timer;
-  var animCounter = 0;
-
+  this.animCounter = 0;
+  this.number = index;
   this.move = function(angle1,angle2) {
-
-    timer = setInterval(soul.animate, 30, angle1, angle2);
-
+    timer = setInterval(soul.animate, 20, angle1, angle2);
   };
-
   this.animate = function(angle1,angle2) {
 
-    animCounter++;
-      if (animCounter<51){
+    soul.animCounter++;
+    var animIndex = 50
+      if (soul.animCounter<animIndex+1){
         angle = angle1;
-      } else if (animCounter<101){
+      } else if (soul.animCounter<2*animIndex+1){
         angle = angle2;
       }
 
@@ -102,8 +107,8 @@ function setNewBall(id) {
       var oldY = Number(me.getAttribute("cy"));
 
 
-      var nextX = oldX+xDiff/50;
-      var nextY = oldY+yDiff/50;
+      var nextX = oldX+xDiff/animIndex;
+      var nextY = oldY+yDiff/animIndex;
 
       var r = Number(me.getAttribute("r"));
       var boardX = Number(board.getAttribute("width"))-6;
@@ -125,10 +130,25 @@ function setNewBall(id) {
       me.setAttribute("cy",nextY);
 
 
-      if(animCounter > 100){
+      var end = false;
+      var target = soul.checkCollision();
+
+      if(target != false){
+        status1.innerHTML = me.getAttribute("fill")+" killed "+target.id.getAttribute("fill")+"!";
+        status2.innerHTML = target.id.getAttribute("fill")+", enter respawn coords with 'respawn' command";
+        end = true;
+      }
+
+      if(soul.animCounter > 2*animIndex || end){
         clearInterval(timer);
         timer = null;
-        animCounter = 0;
+        soul.animCounter = 0;
+      }
+
+      if(end){
+        end = false;
+        target.respawn = true;
+        resp = target.number;
       }
 
   };
@@ -136,20 +156,24 @@ function setNewBall(id) {
   this.checkCollision = function() {
     for (var i = 0; i < players.length; i++) {
 
-      var otherBall = players[i].id;
-      if(me !== otherBall){
+      var otherBall = players[i];
+      if(me !== otherBall.id){
         var myX = Number(me.getAttribute("cx"));
         var myY = Number(me.getAttribute("cy"));
-        var theirX = Number(otherBall.getAttribute("cx"));
-        var theirY = Number(otherBall.getAttribute("cy"));
+        var theirX = Number(otherBall.id.getAttribute("cx"));
+        var theirY = Number(otherBall.id.getAttribute("cy"));
         var radius = Number(me.getAttribute("r"));
-        if (myX <= theirX+2*radius && myX >= theirX-2*radius && myY <= theirY+2*radius && myY >= theirY-2*radius){
-          alert("COLLISION");
+        var zwischenDst = Math.sqrt(Math.pow(Math.abs(myX-theirX),2)+Math.pow(Math.abs(myY-theirY),2));
+        if (zwischenDst<2*radius){
+
+          return otherBall;
         } else {
-          alert("NO COLL"+" "+myX+" "+myY+" "+theirX+" "+theirY+" "+radius+" "+turn);
+
         }
       }
     }
+
+    return false;
   };
   this.botMove = function() {
     var hunted = [];
@@ -187,13 +211,15 @@ function setNewBall(id) {
      var myX = Number(me.getAttribute("cx"));
      var myY = Number(me.getAttribute("cy"));
 
-  }
+  };
+  this.respawn = false;
+
 }
 // BALL DEFINITION
 
-var blue = new setNewBall("blue");
-var red = new setNewBall("red");
-var green = new setNewBall("green");
+var blue = new setNewBall("blue",0);
+var red = new setNewBall("red",1);
+var green = new setNewBall("green",2);
 
 var players = [blue,red,green];
 
@@ -218,6 +244,19 @@ function action(){
   } else if (x=="bot") {
     var me = players[turn];
     me.botMove()
+  } else if(x=="respawn"){
+    if (players[resp].respawn){
+      players[resp].id.setAttribute("cx",input);
+      players[resp].id.setAttribute("cy",input2);
+      players[resp].respawn = false;
+
+      if(resp==turn){
+        nextTurn();
+      }
+      resp = null;
+      status1.innerHTML = "Turn: "+players[turn].id.getAttribute("fill");
+      status2.innerHTML = "Enter 'move' and two angles below";
+    }
   }
 }
 
@@ -226,8 +265,11 @@ function nextTurn() {
   if(turn==players.length){
     turn = 0;
   }
+  status1.innerHTML = "Turn: "+players[turn].id.getAttribute("fill");
 }
 
+status1.innerHTML = "Turn: "+players[turn].id.getAttribute("fill");
+status2.innerHTML = "Enter 'move' and two angles below";
 
 
 </script>
